@@ -4,12 +4,23 @@ Motor frontLeft = 12_mtr;
 Motor backLeft = 11_mtr;
 Motor frontRight = 19_rmtr;
 Motor backRight = 20_rmtr;
+Motor intakeLeft = 2_mtr;
+Motor intakeRight = 9_rmtr;
+Motor liftLeft = 1_mtr;
+Motor liftRight = 10_rmtr;
 
-auto chassis = ChassisControllerFactory::create(
-	{frontLeft, backLeft}, {frontRight, backRight},
-	AbstractMotor::gearset::green,
-	{4.125_in, 13.5_in}
-);
+auto liftControl = AsyncControllerFactory::posIntegrated(liftLeft,liftRight);
+auto hotPocket = ChassisControllerFactory::create({frontLeft, backLeft},
+	{frontRight, backRight}, AbstractMotor::gearset::green, {4.125_in, 16.5_in});
+
+ControllerButton btnUp(ControllerDigital::A);
+ControllerButton btnDown(ControllerDigital::B);
+ControllerButton btnIn(ControllerDigital::up);
+ControllerButton btnOut(ControllerDigital::down);
+
+const double liftHeight = 17.5_in-2_in;
+const double liftLength = 18_in;
+const double heights[3] = {2_in, 20.2_in, 26.2_in};
 
 /**
  * A callback function for LLEMU's center button.
@@ -59,8 +70,9 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	chassis.moveDistance(6_in);
-	chassis.turnAngle(90_deg);
+	liftControl.setTarget(arcsin((1_in-liftHeight)/liftLength));
+	hotPocket.moveDistance(6_in);
+	hotPocket.turnAngle(90_deg);
 }
 
 /**
@@ -78,8 +90,28 @@ void autonomous() {
  */
 void opcontrol() {
 	Controller master;
+	int goalHeight = 0;
 
 	while (true) {
-		frontLeft.controllerSet(master.getAnalog(ControllerAnalog::leftY));
+		drive.tank(masterController.getAnalog(ControllerAnalog::leftY),
+			masterController.getAnalog(ControllerAnalog::rightY));
+
+		if (btnIn.isPressed()) {
+      intakeLeft.moveVoltage(12000);
+	    intakeRight.moveVoltage(12000);
+		} else if (btnOut.isPressed()) {
+      intakeLeft.moveVoltage(-12000);
+	    intakeRight.moveVoltage(-12000);
+		}
+
+    if (btnUp.changedToPressed() && goalHeight < 2) {
+      goalHeight++;
+      liftControl.setTarget(arcsin((heights[goalHeight]-liftHeight)/liftLength));
+    } else if (btnDown.changedToPressed() && goalHeight > 0) {
+      goalHeight--;
+      liftControl.setTarget(arcsin((heights[goalHeight]-liftHeight)/liftLength));
+    }
+
+		pros::delay(10);
 	}
 }
