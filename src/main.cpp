@@ -97,20 +97,20 @@ void opcontrol() {
 			masterController.getAnalog(ControllerAnalog::rightY));
 
 		if (btnIn.isPressed()) {
-      intakeLeft.moveVoltage(12000);
-	    intakeRight.moveVoltage(12000);
+			intakeLeft.moveVoltage(12000);
+			intakeRight.moveVoltage(12000);
 		} else if (btnOut.isPressed()) {
-      intakeLeft.moveVoltage(-12000);
-	    intakeRight.moveVoltage(-12000);
+			intakeLeft.moveVoltage(-12000);
+			intakeRight.moveVoltage(-12000);
 		}
 
-    if (btnUp.changedToPressed() && goalHeight < 2) {
-      goalHeight++;
-      liftControl.setTarget(arcsin((heights[goalHeight]-liftHeight)/liftLength));
-    } else if (btnDown.changedToPressed() && goalHeight > 0) {
-      goalHeight--;
-      liftControl.setTarget(arcsin((heights[goalHeight]-liftHeight)/liftLength));
-    }
+		if (btnUp.changedToPressed() && goalHeight < 2) {
+			goalHeight++;
+			liftControl.setTarget(arcsin((heights[goalHeight]-liftHeight)/liftLength));
+		} else if (btnDown.changedToPressed() && goalHeight > 0) {
+			goalHeight--;
+			liftControl.setTarget(arcsin((heights[goalHeight]-liftHeight)/liftLength));
+		}
 
 		pros::delay(10);
 	}
