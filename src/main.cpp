@@ -1,4 +1,5 @@
 #include "main.h"
+using namespace okapi;
 
 Motor frontLeft = 12_mtr;
 Motor backLeft = 11_mtr;
@@ -9,18 +10,19 @@ Motor intakeRight = 9_rmtr;
 Motor liftLeft = 1_mtr;
 Motor liftRight = 10_rmtr;
 
-auto liftControl = AsyncControllerFactory::posIntegrated(liftLeft,liftRight);
+auto liftControlL = AsyncControllerFactory::posIntegrated(liftLeft);
+auto liftControlR = AsyncControllerFactory::posIntegrated(liftRight);
 auto hotPocket = ChassisControllerFactory::create({frontLeft, backLeft},
-	{frontRight, backRight}, AbstractMotor::gearset::green, {4.125_in, 16.5_in});
+	{frontRight, backRight}, AbstractMotor::gearset::green, {4.125_in, 15.5_in});
 
-ControllerButton btnUp(ControllerDigital::A);
-ControllerButton btnDown(ControllerDigital::B);
-ControllerButton btnIn(ControllerDigital::up);
-ControllerButton btnOut(ControllerDigital::down);
+ControllerButton btnUp(ControllerDigital::L1);
+ControllerButton btnDown(ControllerDigital::L2);
+ControllerButton btnIn(ControllerDigital::R1);
+ControllerButton btnOut(ControllerDigital::R2);
 
-const double liftHeight = 17.5_in-2_in;
-const double liftLength = 18_in;
-const double heights[3] = {2_in, 20.2_in, 26.2_in};
+const double liftHeight = 15.5;
+const double liftLength = 18;
+const double angles[3] = {asin((1-liftHeight)/liftLength), asin((20.2-liftHeight)/liftLength), asin((26.2-liftHeight)/liftLength)};
 
 /**
  * A callback function for LLEMU's center button.
@@ -70,9 +72,12 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	liftControl.setTarget(arcsin((1_in-liftHeight)/liftLength));
-	hotPocket.moveDistance(6_in);
-	hotPocket.turnAngle(90_deg);
+	liftControlL.setTarget(angles[0]);
+	liftControlR.setTarget(angles[0]);
+	hotPocket.moveDistance(36_in);
+	intakeLeft.moveVoltage(-12000);
+	intakeRight.moveVoltage(-12000);
+	pros::delay(1000);
 }
 
 /**
@@ -90,11 +95,13 @@ void autonomous() {
  */
 void opcontrol() {
 	Controller master;
-	int goalHeight = 0;
+	int goal = 0;
+
+	master.setText(1, 1, "1");
 
 	while (true) {
-		drive.tank(masterController.getAnalog(ControllerAnalog::leftY),
-			masterController.getAnalog(ControllerAnalog::rightY));
+		hotPocket.tank(master.getAnalog(ControllerAnalog::leftY),
+			master.getAnalog(ControllerAnalog::rightY));
 
 		if (btnIn.isPressed()) {
 			intakeLeft.moveVoltage(12000);
@@ -102,14 +109,38 @@ void opcontrol() {
 		} else if (btnOut.isPressed()) {
 			intakeLeft.moveVoltage(-12000);
 			intakeRight.moveVoltage(-12000);
+		} else {
+			intakeLeft.moveVoltage(0);
+			intakeRight.moveVoltage(0);
 		}
 
-		if (btnUp.changedToPressed() && goalHeight < 2) {
-			goalHeight++;
-			liftControl.setTarget(arcsin((heights[goalHeight]-liftHeight)/liftLength));
-		} else if (btnDown.changedToPressed() && goalHeight > 0) {
-			goalHeight--;
-			liftControl.setTarget(arcsin((heights[goalHeight]-liftHeight)/liftLength));
+		if (btnUp.isPressed()) {
+			liftLeft.moveVoltage(12000);
+			liftRight.moveVoltage(12000);
+		} else if (btnDown.isPressed()) {
+			liftLeft.moveVoltage(-2000);
+			liftRight.moveVoltage(-2000);
+		} else {
+			liftLeft.moveVoltage(0);
+			liftRight.moveVoltage(0);
+		}
+
+	  /*if (btnUp.changedToPressed() && goal < 2) {
+			goal++;
+			liftControlL.setTarget(angles[goal]);
+			liftControlR.setTarget(angles[goal]);
+		} else if (btnDown.changedToPressed() && goal > 0) {
+			goal--;
+			liftControlL.setTarget(angles[goal]);
+			liftControlR.setTarget(angles[goal]);
+		}*/
+
+		if (goal == 0) {
+			master.setText(1, 1, "0");
+		} else if (goal == 1) {
+			master.setText(1, 1, "1");
+		} else if (goal == 2) {
+			master.setText(1, 1, "2");
 		}
 
 		pros::delay(10);
