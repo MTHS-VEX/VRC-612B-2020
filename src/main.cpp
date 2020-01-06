@@ -5,13 +5,14 @@ Motor frontLeft = 12_mtr;
 Motor backLeft = 11_mtr;
 Motor frontRight = 19_rmtr;
 Motor backRight = 20_rmtr;
-Motor intakeLeft = 2_mtr;
+Motor intakeLeft = 2_mtr;1
 Motor intakeRight = 9_rmtr;
 Motor liftLeft = 1_mtr;
 Motor liftRight = 10_rmtr;
 
 auto liftControlL = AsyncControllerFactory::posIntegrated(liftLeft);
 auto liftControlR = AsyncControllerFactory::posIntegrated(liftRight);
+
 auto hotPocket = ChassisControllerFactory::create({frontLeft, backLeft},
 	{frontRight, backRight}, AbstractMotor::gearset::green, {4.125_in, 15.5_in});
 
@@ -22,7 +23,8 @@ ControllerButton btnOut(ControllerDigital::R2);
 
 const double liftHeight = 15.5;
 const double liftLength = 18;
-const double angles[3] = {asin((1-liftHeight)/liftLength), asin((20.2-liftHeight)/liftLength), asin((26.2-liftHeight)/liftLength)};
+const double angles[3] = {asin((1-liftHeight)/liftLength),
+	asin((20.2-liftHeight)/liftLength), asin((26.2-liftHeight)/liftLength)};
 
 /**
  * A callback function for LLEMU's center button.
@@ -30,9 +32,7 @@ const double angles[3] = {asin((1-liftHeight)/liftLength), asin((20.2-liftHeight
  * When this callback is fired, it will toggle line 2 of the LCD text between
  * "I was pressed!" and nothing.
  */
-void on_center_button() {
-
-}
+void on_center_button() {}
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -100,8 +100,8 @@ void opcontrol() {
 	master.setText(1, 1, "1");
 
 	while (true) {
-		hotPocket.tank(master.getAnalog(ControllerAnalog::leftY),
-			master.getAnalog(ControllerAnalog::rightY));
+		hotPocket.tank(master.getAnalog(ControllerAnalog::leftY)*0.75,
+			master.getAnalog(ControllerAnalog::rightY)*0.75);
 
 		if (btnIn.isPressed()) {
 			intakeLeft.moveVoltage(12000);
